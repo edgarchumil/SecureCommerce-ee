@@ -1,0 +1,143 @@
+name: securecommerce-advisor
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-securecommerce}
+      POSTGRES_USER: ${POSTGRES_USER:-securecommerce}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-securecommerce_dev}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [backend]
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [backend]
+    restart: unless-stopped
+
+  report-storage-init:
+    image: alpine:3.21
+    command: ["sh", "-c", "mkdir -p /data/reports && chown -R 100:101 /data/reports"]
+    volumes: [report_data:/data/reports]
+    restart: "no"
+
+  backup:
+    profiles: ["backup"]
+    build: ./infrastructure/backup
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-securecommerce}
+      POSTGRES_USER: ${POSTGRES_USER:-securecommerce}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-securecommerce_dev}
+      BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:-}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-35}
+    depends_on:
+      postgres: { condition: service_healthy }
+    volumes:
+      - report_data:/data/reports:ro
+      - backup_data:/backups
+    networks: [backend]
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+      target: runtime
+    environment: &backend-environment
+      APP_ENV: ${APP_ENV:-development}
+      APP_NAME: ${APP_NAME:-SecureCommerce Advisor}
+      API_V1_PREFIX: ${API_V1_PREFIX:-/api/v1}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SECRET_KEY: ${SECRET_KEY:-development-only-secret-change-me-12345}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://securecommerce:securecommerce_dev@postgres:5432/securecommerce}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://localhost:5173}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-change-this-demo-password}
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5-mini}
+      AI_ENABLED: ${AI_ENABLED:-false}
+      AI_MAX_TOKENS: ${AI_MAX_TOKENS:-1000}
+      AI_TIMEOUT_SECONDS: ${AI_TIMEOUT_SECONDS:-30}
+      AI_MONTHLY_BUDGET_LIMIT: ${AI_MONTHLY_BUDGET_LIMIT:-25}
+      AI_INPUT_COST_PER_MILLION: ${AI_INPUT_COST_PER_MILLION:-0}
+      AI_OUTPUT_COST_PER_MILLION: ${AI_OUTPUT_COST_PER_MILLION:-0}
+      REPORT_STORAGE_PATH: /data/reports
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      report-storage-init: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/ready')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks: [backend, edge]
+    volumes: [report_data:/data/reports]
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./backend
+      target: runtime
+    command: ["celery", "-A", "app.worker.celery_app", "worker", "--loglevel=INFO"]
+    environment: *backend-environment
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      report-storage-init: { condition: service_completed_successfully }
+    networks: [backend]
+    volumes: [report_data:/data/reports]
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      target: runtime
+    networks: [edge]
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api: { condition: service_healthy }
+      frontend: { condition: service_started }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [edge]
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  report_data:
+  backup_data:
+
+networks:
+  backend:
+    internal: true
+  edge:

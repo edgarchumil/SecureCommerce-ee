@@ -1,0 +1,1 @@
+export interface ReportItem { id: string; report_type: 'executive' | 'technical'; status: 'pending' | 'processing' | 'completed' | 'failed'; title: string; scope: string; file_name: string | null; size_bytes: number | null; sha256: string | null; error_message: string | null; created_at: string; updated_at: string; download_url: string | null }
