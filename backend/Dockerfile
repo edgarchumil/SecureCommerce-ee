@@ -10,6 +10,8 @@ RUN pip install --no-cache-dir .
 COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./
+COPY render-start.sh ./render-start.sh
+RUN chmod +x ./render-start.sh
 RUN mkdir -p /data/reports && chown -R app:app /data
 
 FROM base AS test
