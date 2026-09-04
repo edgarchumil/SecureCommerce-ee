@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { login, type OrganizationOption } from '../api/auth'
+import { PasswordInput } from '../components/PasswordInput'
 import { useAuth } from '../features/auth/AuthContext'
 import { loginSchema, type LoginValues } from '../schemas/auth'
 
@@ -78,7 +79,7 @@ export function LoginPage() {
           </label>
           <label className="block text-sm font-medium text-slate-800">
             Contraseña
-            <input className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5" autoComplete="current-password" type="password" {...register('password')} />
+            <PasswordInput className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5" autoComplete="current-password" {...register('password')} />
             {errors.password && <span className="mt-1 block text-sm text-red-700">{errors.password.message}</span>}
           </label>
           {mfaRequired && <label className="block text-sm font-medium text-slate-800">Código de verificación<input className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 tracking-[0.35em]" autoComplete="one-time-code" inputMode="numeric" maxLength={6} {...register('mfa_code')} /><span className="mt-1 block text-xs text-slate-600">Ingrese el código de su aplicación autenticadora.</span></label>}
