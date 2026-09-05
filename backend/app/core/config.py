@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     ai_input_cost_per_million: float = Field(default=0, ge=0)
     ai_output_cost_per_million: float = Field(default=0, ge=0)
     report_storage_path: str = "storage/reports"
+    report_execution_mode: Literal["celery", "background"] = "celery"
 
     @field_validator("cors_origins", mode="before")
     @classmethod

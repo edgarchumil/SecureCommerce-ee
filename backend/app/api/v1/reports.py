@@ -1,7 +1,8 @@
 from pathlib import Path
+from urllib.parse import quote
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +14,7 @@ from app.schemas.reports import ReportCreate, ReportResponse
 from app.security.dependencies import Principal, require_permission
 from app.security.permissions import Permission
 from app.services.audit import add_audit
-from app.tasks import generate_report
+from app.tasks import generate_in_background, generate_report, recoverable_reports
 
 router = APIRouter(prefix="/reports", tags=["reportes"])
 
@@ -47,6 +48,7 @@ def _response(item: Report) -> ReportResponse:
 async def create_report(
     payload: ReportCreate,
     request: Request,
+    background_tasks: BackgroundTasks,
     principal: Principal = Depends(require_permission(Permission.REPORT_CREATE)),
     db: AsyncSession = Depends(get_db),
 ) -> ReportResponse:
@@ -68,12 +70,16 @@ async def create_report(
         changes={"type": payload.report_type.value},
     )
     await db.commit()
-    generate_report.delay(str(item.id))
+    if settings.report_execution_mode == "background":
+        background_tasks.add_task(generate_in_background, item.id)
+    else:
+        generate_report.delay(str(item.id))
     return _response(item)
 
 
 @router.get("", response_model=list[ReportResponse])
 async def list_reports(
+    background_tasks: BackgroundTasks,
     principal: Principal = Depends(require_permission(Permission.REPORT_READ)),
     db: AsyncSession = Depends(get_db),
 ) -> list[ReportResponse]:
@@ -84,6 +90,17 @@ async def list_reports(
             .order_by(Report.created_at.desc())
         )
     ).all()
+    if settings.report_execution_mode == "background":
+        pending = (
+            await db.scalars(
+                select(Report.id)
+                .where(Report.organization_id == _org(principal), recoverable_reports())
+                .order_by(Report.created_at)
+                .limit(3)
+            )
+        ).all()
+        for report_id in pending:
+            background_tasks.add_task(generate_in_background, report_id)
     return [_response(item) for item in items]
 
 
@@ -107,7 +124,7 @@ async def download_report(
     request: Request,
     principal: Principal = Depends(require_permission(Permission.REPORT_READ)),
     db: AsyncSession = Depends(get_db),
-) -> FileResponse:
+) -> Response:
     organization_id = _org(principal)
     item = await db.scalar(
         select(Report).where(
@@ -116,11 +133,17 @@ async def download_report(
             Report.status == ReportStatus.COMPLETED,
         )
     )
-    if item is None or not item.storage_key:
+    if item is None:
         raise HTTPException(status_code=404, detail="Reporte no disponible")
+    content = await db.scalar(
+        select(Report.pdf_content).where(
+            Report.id == item.id,
+            Report.organization_id == organization_id,
+        )
+    )
     root = Path(settings.report_storage_path).resolve()
-    path = (root / item.storage_key).resolve()
-    if root not in path.parents or not path.is_file():
+    path = (root / (item.storage_key or "")).resolve()
+    if content is None and (root not in path.parents or not path.is_file()):
         raise HTTPException(status_code=404, detail="Reporte no disponible")
     add_audit(
         db,
@@ -133,4 +156,11 @@ async def download_report(
         resource_id=str(item.id),
     )
     await db.commit()
+    if content is not None:
+        filename = quote(item.file_name or f"reporte-{item.id}.pdf")
+        return Response(
+            content=content,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
+        )
     return FileResponse(path, media_type="application/pdf", filename=item.file_name)

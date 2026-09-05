@@ -104,6 +104,12 @@ El registro, disponible solo para administradores con sesión iniciada, crea una
 
 ## Problemas frecuentes
 
+En Render, `render-start.sh` activa `REPORT_EXECUTION_MODE=background`: la API genera
+los PDF sin un trabajador Celery separado. Al abrir Reportes PDF se recuperan los
+pendientes de la empresa seleccionada y los procesos interrumpidos hace más de diez
+minutos. Los nuevos PDF se conservan también en PostgreSQL para mantener la descarga
+tras un reinicio. Docker Compose conserva el modo `celery` con su trabajador dedicado.
+
 - `docker no se reconoce`: instale/inicie Docker Desktop y abra una terminal nueva.
 - Puerto `8080` ocupado: defina `APP_PORT=8081` en `.env`.
 - API `degraded`: revise `docker compose ps` y `docker compose logs postgres redis api`.
