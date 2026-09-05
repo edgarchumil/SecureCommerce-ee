@@ -6,6 +6,7 @@ from pathlib import Path
 from uuid import UUID
 
 from sqlalchemy import or_, update
+from sqlalchemy.sql.elements import ColumnElement
 
 from app.core.config import settings
 from app.core.database import SessionFactory, dispose_engine
@@ -24,7 +25,7 @@ async def generate_in_background(report_id: UUID) -> None:
         await _generate(report_id)
 
 
-def recoverable_reports():  # type: ignore[no-untyped-def]
+def recoverable_reports() -> ColumnElement[bool]:
     return or_(
         Report.status == ReportStatus.PENDING,
         (Report.status == ReportStatus.PROCESSING)

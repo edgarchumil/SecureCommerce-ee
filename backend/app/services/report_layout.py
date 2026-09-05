@@ -226,18 +226,15 @@ def build_pdf(path: Path, report_type: str, data: dict[str, Any]) -> None:
             y = 59 - i * 18
             count = distribution.get(code, 0)
             chart.add(String(0, y, title, fontName="Helvetica", fontSize=8, fillColor=NAVY))
-            chart.add(Rect(60, y - 1, width - 95, 9, fillColor=PALE, strokeColor=None))
+            track = Rect(60, y - 1, width - 95, 9)
+            track.fillColor = PALE
+            track.strokeColor = None
+            chart.add(track)
             if count:
-                chart.add(
-                    Rect(
-                        60,
-                        y - 1,
-                        (width - 95) * count / max_count,
-                        9,
-                        fillColor=colors.HexColor(color),
-                        strokeColor=None,
-                    )
-                )
+                bar = Rect(60, y - 1, (width - 95) * count / max_count, 9)
+                bar.fillColor = colors.HexColor(color)
+                bar.strokeColor = None
+                chart.add(bar)
             chart.add(
                 String(
                     width - 20, y, str(count), fontName="Helvetica-Bold", fontSize=8, fillColor=NAVY

@@ -213,7 +213,7 @@ async def collect_report_data(db: AsyncSession, report: Report) -> dict[str, Any
                 "progress": r.progress,
                 "description": r.description,
                 "controls": r.existing_controls,
-                "owner": users.get(r.responsible_user_id),
+                "owner": users.get(r.responsible_user_id) if r.responsible_user_id else None,
                 "date": str(r.target_date) if r.target_date else None,
             }
             for r in risks
@@ -222,7 +222,7 @@ async def collect_report_data(db: AsyncSession, report: Report) -> dict[str, Any
             {
                 "risk": risk_by_id[t.risk_id].code,
                 "action": t.action,
-                "owner": users.get(t.responsible_user_id),
+                "owner": users.get(t.responsible_user_id) if t.responsible_user_id else None,
                 "date": str(t.target_date) if t.target_date else None,
                 "progress": t.progress,
                 "overdue": bool(t.target_date and t.target_date < now.date() and t.progress < 100),
