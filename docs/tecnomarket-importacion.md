@@ -62,3 +62,24 @@ Se ingresa con `administrador@demo.local` y su contraseña habitual, seleccionan
 
 La verificación de la nube queda en `output/tecnomarket/verificacion-nube.json`.
 La aplicación se encuentra en https://securecommerce-ee.onrender.com.
+
+## Verificación del 5 de septiembre de 2026
+
+Se comprobó la persistencia mediante lecturas nuevas de la API, las 120 acciones,
+el panel (12 activos, 120 riesgos y 94 prioritarios), búsqueda A12/R-A12-10,
+paginación de riesgos, umbral crítico 16 y cambio de empresa hacia Maya y de regreso.
+Las capturas de la interfaz desplegada se guardaron en `output/tecnomarket/`.
+Los reportes ejecutivo (5 páginas) y técnico (51 páginas, 120 códigos de riesgo)
+se generaron y descargaron desde la nube; también están en Reportes PDF.
+
+La suite funcional del backend contiene 56 pruebas satisfactorias. Se configura
+la concurrencia `thread, greenlet` para que Coverage mida también las continuaciones
+de SQLAlchemy asíncrono; sin esta opción la medición omite código ejecutado.
+Referencia: https://coverage.readthedocs.io/en/7.13.4/config.html#run-concurrency.
+La interfaz superó pruebas de búsqueda/paginación, escala por empresa y limpieza
+de caché, lint y compilación. La revisión del navegador no registró errores JavaScript.
+
+Limitación previa del repositorio: el workflow independiente `Security` no arranca
+porque `.github/workflows/security.yml` referencia una versión inexistente
+`aquasecurity/trivy-action@0.33.1`. No es un resultado de escaneo ni impidió el
+despliegue de Render. Su corrección no forma parte de la importación documental.
