@@ -1,4 +1,5 @@
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
+export interface RiskBand { level: RiskLevel; minimum: number; maximum: number }
 export type RiskStatus = 'identified' | 'analyzing' | 'in_treatment' | 'accepted' | 'closed'
 export type TreatmentStrategy = 'avoid' | 'mitigate' | 'transfer' | 'accept'
 

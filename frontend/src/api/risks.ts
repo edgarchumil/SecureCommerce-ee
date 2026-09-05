@@ -1,9 +1,13 @@
 import { apiClient } from './client'
-import type { CatalogItem, Risk, RiskPageData, RiskPayload, Treatment } from '../types/risks'
+import type { CatalogItem, Risk, RiskBand, RiskPageData, RiskPayload, Treatment } from '../types/risks'
 
-export async function getRisks(search = '', level = ''): Promise<RiskPageData> {
-  const { data } = await apiClient.get<RiskPageData>('/risks', { params: { search: search || undefined, level: level || undefined } })
+export async function getRisks(search = '', level = '', page = 1): Promise<RiskPageData> {
+  const { data } = await apiClient.get<RiskPageData>('/risks', { params: { search: search || undefined, level: level || undefined, page } })
   return data
+}
+export async function getRiskBands(): Promise<RiskBand[]> {
+  const { data } = await apiClient.get<{ bands: RiskBand[] }>('/settings/risk-bands')
+  return data.bands
 }
 export async function createRisk(payload: RiskPayload): Promise<Risk> {
   const { data } = await apiClient.post<Risk>('/risks', payload); return data

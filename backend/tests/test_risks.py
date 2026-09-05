@@ -159,3 +159,47 @@ async def test_admin_can_change_bands_and_invalid_config_is_rejected(client: Asy
     assert (
         await client.put("/api/v1/settings/risk-bands", headers=headers, json={"bands": []})
     ).status_code == 422
+
+
+async def test_read_risk_bands_uses_selected_organization(client: AsyncClient) -> None:
+    first = await register(client, "bands-one@example.com", "bands-one")
+    second = await register(client, "bands-two@example.com", "bands-two")
+    first_headers = {"Authorization": f"Bearer {first['access_token']}"}
+    second_headers = {"Authorization": f"Bearer {second['access_token']}"}
+    path = "/api/v1/settings/risk-bands"
+    original = (await client.get(path, headers=second_headers)).json()
+    bands = [
+        {"level": "low", "minimum": 1, "maximum": 4},
+        {"level": "medium", "minimum": 5, "maximum": 9},
+        {"level": "high", "minimum": 10, "maximum": 15},
+        {"level": "critical", "minimum": 16, "maximum": 25},
+    ]
+    assert (await client.put(path, headers=first_headers, json={"bands": bands})).status_code == 204
+    assert (await client.get(path, headers=first_headers)).json() == {"bands": bands}
+    assert (await client.get(path, headers=second_headers)).json() == original
+    assert (await client.get(path)).status_code == 401
+
+
+async def test_document_import_catalogs_pagination_and_asset_filter(client: AsyncClient) -> None:
+    _, headers, asset, threat, vulnerability = await setup_risk(
+        client, "document@example.com", "document-case"
+    )
+    for path, item in [("threats", threat), ("vulnerabilities", vulnerability)]:
+        catalog = await client.get(f"/api/v1/{path}", headers=headers)
+        assert catalog.status_code == 200
+        assert catalog.json() == [item]
+    for index in range(3):
+        payload = risk_payload(asset["id"], threat["id"], vulnerability["id"])
+        payload.update(code=f"R-A01-{index+1:02}", progress=0,
+                       residual_probability=4, residual_impact=5)
+        result = await client.post("/api/v1/risks", headers=headers, json=payload)
+        assert result.status_code == 201
+        assert result.json()["residual_score"] == result.json()["inherent_score"]
+    params = {"page": 1, "page_size": 2, "asset_id": asset["id"],
+              "risk_status": "identified", "search": "R-A01"}
+    first = (await client.get("/api/v1/risks", headers=headers, params=params)).json()
+    second = (await client.get("/api/v1/risks", headers=headers,
+                               params=params | {"page": 2})).json()
+    assert first["total"] == 3 and first["pages"] == 2
+    assert len(first["items"]) == 2 and len(second["items"]) == 1
+    assert not {r["id"] for r in first["items"]} & {r["id"] for r in second["items"]}

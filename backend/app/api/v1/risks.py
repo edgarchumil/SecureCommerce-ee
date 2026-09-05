@@ -446,3 +446,15 @@ async def update_risk_bands(
         changes=value,
     )
     await db.commit()
+
+
+@router.get("/settings/risk-bands", response_model=RiskBandsUpdate)
+async def read_risk_bands(
+    principal: Principal = Depends(require_permission(Permission.RISK_READ)),
+    db: AsyncSession = Depends(get_db),
+) -> RiskBandsUpdate:
+    bands = await _bands(db, _org(principal))
+    return RiskBandsUpdate(bands=[
+        {"level": band.level.value, "minimum": band.minimum, "maximum": band.maximum}
+        for band in bands
+    ])
