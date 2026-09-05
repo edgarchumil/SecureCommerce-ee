@@ -22,7 +22,6 @@ import { PasswordResetPage } from '../pages/PasswordResetPage'
 import { ProfilePage } from '../pages/ProfilePage'
 import { SettingsPage } from '../pages/SettingsPage'
 import { UsersPage } from '../pages/UsersPage'
-import { RegisterPage } from '../pages/RegisterPage'
 import { OrganizationsPage } from '../pages/OrganizationsPage'
 import { PlatformPage } from '../pages/PlatformPage'
 import { ProtectedRoute } from '../features/auth/ProtectedRoute'
@@ -33,8 +32,8 @@ export function AppRoutes() {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/registro" element={<Navigate replace to="/login" />} />
       <Route path="/recuperar-contrasena" element={<PasswordResetPage />} />
-      <Route path="/registro" element={<RegisterPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
         <Route path="/panel" element={<PanelPage />} />

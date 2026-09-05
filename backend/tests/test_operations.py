@@ -2,20 +2,7 @@ from datetime import UTC, datetime
 
 from httpx import AsyncClient
 
-
-async def register(client: AsyncClient, email: str, slug: str) -> dict[str, object]:
-    response = await client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": email,
-            "full_name": "Persona de Prueba",
-            "password": "Clave-Segura-2026!",
-            "organization_name": f"Empresa {slug}",
-            "organization_slug": slug,
-        },
-    )
-    assert response.status_code == 201
-    return response.json()
+from tests.test_identity import register
 
 
 async def test_incident_lifecycle_and_audit(client: AsyncClient) -> None:

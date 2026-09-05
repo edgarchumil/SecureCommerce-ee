@@ -10,17 +10,23 @@ from app.security.tokens import create_access_token, decode_access_token
 
 
 async def register(client: AsyncClient, email: str, slug: str) -> dict[str, object]:
-    response = await client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": email,
-            "full_name": "Persona de Prueba",
-            "password": "Clave-Segura-2026!",
-            "organization_name": f"Empresa {slug}",
-            "organization_slug": slug,
-        },
-    )
-    assert response.status_code == 201, response.text
+    from app.core.database import get_db
+    from app.main import app
+    from app.models.identity import Membership, Organization, User
+
+    async for db in app.dependency_overrides[get_db]():
+        user = User(email=email, full_name="Persona de Prueba",
+                    password_hash=hash_password("Clave-Segura-2026!"))
+        organization = Organization(name=f"Empresa {slug}", slug=slug)
+        db.add_all([user, organization])
+        await db.flush()
+        db.add(Membership(user_id=user.id, organization_id=organization.id,
+                          role_code=RoleCode.ORG_ADMIN))
+        await db.commit()
+    response = await client.post("/api/v1/auth/login", json={
+        "email": email, "password": "Clave-Segura-2026!",
+    })
+    assert response.status_code == 200, response.text
     return response.json()
 
 

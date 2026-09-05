@@ -100,7 +100,7 @@ Los access tokens vencen en 15 minutos. Los refresh tokens rotativos se envían 
 
 Cada organización dispone de activos, evaluaciones, riesgos, incidentes, auditoría y reportes separados mediante `organization_id`. Un usuario asociado con varias empresas selecciona la organización al iniciar sesión y puede cambiarla desde **Mis empresas**. La organización seleccionada se conserva al renovar la sesión.
 
-El registro público crea una organización y su primera cuenta `org_admin`. La cuenta local `administrador@demo.local` también es superadministradora de demostración y puede consultar o suspender organizaciones desde **Administración de plataforma**. Una organización suspendida no admite nuevos accesos ni renovación de sesiones.
+El registro, disponible solo para administradores con sesión iniciada, crea una organización y su primera cuenta `org_admin`. La cuenta local `administrador@demo.local` también es superadministradora de demostración y puede consultar o suspender organizaciones desde **Administración de plataforma**. Una organización suspendida no admite nuevos accesos ni renovación de sesiones.
 
 ## Problemas frecuentes
 

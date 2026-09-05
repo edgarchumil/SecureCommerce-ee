@@ -1,5 +1,6 @@
 import { ArrowRight, BarChart3, Bot, Boxes, Check, ChevronRight, ClipboardCheck, FileText, LockKeyhole, Menu, ShieldCheck, Sparkles, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { BrandLoading } from '../components/BrandLoading'
 import { Link } from 'react-router-dom'
 
 const capabilities = [
@@ -13,6 +14,13 @@ const capabilities = [
 
 export function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    const timer = window.setTimeout(() => setLoading(false), 2000)
+    return () => window.clearTimeout(timer)
+  }, [])
+
+  if (loading) return <BrandLoading />
 
   return (
     <main className="landing min-h-screen overflow-hidden bg-[#f7fafc] text-slate-950">
@@ -25,10 +33,10 @@ export function HomePage() {
           <nav className="hidden items-center gap-8 text-sm font-medium text-slate-200 md:flex" aria-label="Navegación principal">
             <a className="transition hover:text-cyan-300" href="#solucion">Solución</a><a className="transition hover:text-cyan-300" href="#como-funciona">Cómo funciona</a><a className="transition hover:text-cyan-300" href="#beneficios">Beneficios</a>
           </nav>
-          <div className="hidden items-center gap-3 md:flex"><Link className="text-sm font-semibold text-cyan-300" to="/registro">Registrar empresa</Link><Link className="inline-flex items-center gap-2 rounded-xl border border-cyan-300/40 px-5 py-2.5 text-sm font-semibold transition hover:border-cyan-300 hover:bg-cyan-300 hover:text-[#061b35]" to="/login"><LockKeyhole size={16} aria-hidden="true" /> Iniciar sesión</Link></div>
+          <div className="hidden items-center gap-3 md:flex"><Link className="inline-flex items-center gap-2 rounded-xl border border-cyan-300/40 px-5 py-2.5 text-sm font-semibold transition hover:border-cyan-300 hover:bg-cyan-300 hover:text-[#061b35]" to="/login" state={{ showLoading: true }}><LockKeyhole size={16} aria-hidden="true" /> Iniciar sesión</Link></div>
           <button className="rounded-lg p-2 md:hidden" type="button" aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <Menu />}</button>
         </div>
-        {menuOpen && <nav className="border-t border-white/10 bg-[#061b35] px-5 py-5 md:hidden" aria-label="Navegación móvil"><div className="mx-auto flex max-w-7xl flex-col gap-4 text-sm text-slate-200"><a href="#solucion" onClick={() => setMenuOpen(false)}>Solución</a><a href="#como-funciona" onClick={() => setMenuOpen(false)}>Cómo funciona</a><a href="#beneficios" onClick={() => setMenuOpen(false)}>Beneficios</a><Link className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-5 py-3 font-bold text-[#061b35]" to="/login">Iniciar sesión <ArrowRight size={17} /></Link></div></nav>}
+        {menuOpen && <nav className="border-t border-white/10 bg-[#061b35] px-5 py-5 md:hidden" aria-label="Navegación móvil"><div className="mx-auto flex max-w-7xl flex-col gap-4 text-sm text-slate-200"><a href="#solucion" onClick={() => setMenuOpen(false)}>Solución</a><a href="#como-funciona" onClick={() => setMenuOpen(false)}>Cómo funciona</a><a href="#beneficios" onClick={() => setMenuOpen(false)}>Beneficios</a><Link className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-5 py-3 font-bold text-[#061b35]" to="/login" state={{ showLoading: true }}>Iniciar sesión <ArrowRight size={17} /></Link></div></nav>}
       </header>
 
       <section className="hero-grid relative bg-[#061b35] pb-24 pt-32 text-white sm:pb-32 sm:pt-40">
@@ -39,7 +47,7 @@ export function HomePage() {
             <h1 className="max-w-3xl text-4xl font-extrabold leading-[1.08] tracking-[-0.035em] sm:text-6xl lg:text-[4.15rem]">Proteja su empresa.<br /><span className="text-cyan-300">Decida con claridad.</span></h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">Identifique sus activos críticos, evalúe riesgos y reciba recomendaciones claras con apoyo de inteligencia artificial, desde una sola plataforma.</p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-6 py-3.5 font-bold text-[#061b35] shadow-[0_16px_45px_rgba(34,211,238,.18)] transition hover:-translate-y-0.5 hover:bg-cyan-300" to="/registro">Registrar mi empresa <ArrowRight size={18} aria-hidden="true" /></Link>
+              <Link className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-6 py-3.5 font-bold text-[#061b35] shadow-[0_16px_45px_rgba(34,211,238,.18)] transition hover:-translate-y-0.5 hover:bg-cyan-300" to="/login" state={{ showLoading: true }}>Iniciar sesión <ArrowRight size={18} aria-hidden="true" /></Link>
               <a className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 font-semibold transition hover:border-white/45 hover:bg-white/5" href="#solucion">Conocer la solución <ChevronRight size={18} aria-hidden="true" /></a>
             </div>
             <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 text-sm text-slate-300">{['En español', 'Basado en NIST CSF 2.0', 'Diseñado para Guatemala'].map((item) => <span className="flex items-center gap-2" key={item}><Check className="text-cyan-300" size={17} strokeWidth={3} /> {item}</span>)}</div>
@@ -70,7 +78,7 @@ export function HomePage() {
 
       <section id="como-funciona" className="scroll-mt-20 bg-white py-20 sm:py-28"><div className="mx-auto max-w-7xl px-5 sm:px-8"><div className="grid items-center gap-14 lg:grid-cols-2"><div><p className="section-eyebrow">Simple desde el primer día</p><h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#082443] sm:text-5xl">De la incertidumbre a un plan de acción</h2><p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">No necesita un equipo especializado para comenzar. La plataforma le guía en cada etapa.</p></div><ol className="space-y-4">{[['01', 'Registre lo importante', 'Identifique los activos tecnológicos que sostienen su operación.'], ['02', 'Evalúe su situación', 'Complete un diagnóstico estructurado con base en estándares reconocidos.'], ['03', 'Priorice y mejore', 'Reciba riesgos ordenados, recomendaciones y reportes para actuar con confianza.']].map(([number, title, text]) => <li className="flex gap-5 rounded-2xl border border-slate-200 bg-[#f8fbfd] p-5 transition hover:border-cyan-300" key={number}><span className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#082443] text-sm font-extrabold text-cyan-300">{number}</span><div><h3 className="font-bold text-[#082443]">{title}</h3><p className="mt-1 leading-6 text-slate-600">{text}</p></div></li>)}</ol></div></div></section>
 
-      <section id="beneficios" className="scroll-mt-20 bg-[#071f3b] py-20 text-white sm:py-24"><div className="mx-auto max-w-7xl px-5 text-center sm:px-8"><p className="section-eyebrow text-cyan-300">Seguridad al alcance de su empresa</p><h2 className="mx-auto mt-3 max-w-3xl text-3xl font-extrabold tracking-tight sm:text-5xl">Conozca sus riesgos antes de que se conviertan en incidentes</h2><p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-300">Centralice la información, defina prioridades y construya una cultura de mejora continua.</p><Link className="mt-9 inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-7 py-3.5 font-bold text-[#061b35] transition hover:-translate-y-0.5 hover:bg-cyan-300" to="/login">Comenzar ahora <ArrowRight size={18} /></Link></div></section>
+      <section id="beneficios" className="scroll-mt-20 bg-[#071f3b] py-20 text-white sm:py-24"><div className="mx-auto max-w-7xl px-5 text-center sm:px-8"><p className="section-eyebrow text-cyan-300">Seguridad al alcance de su empresa</p><h2 className="mx-auto mt-3 max-w-3xl text-3xl font-extrabold tracking-tight sm:text-5xl">Conozca sus riesgos antes de que se conviertan en incidentes</h2><p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-300">Centralice la información, defina prioridades y construya una cultura de mejora continua.</p><Link className="mt-9 inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-7 py-3.5 font-bold text-[#061b35] transition hover:-translate-y-0.5 hover:bg-cyan-300" to="/login" state={{ showLoading: true }}>Comenzar ahora <ArrowRight size={18} /></Link></div></section>
 
       <footer className="border-t border-slate-200 bg-white py-8"><div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-5 text-center text-sm text-slate-500 sm:px-8 md:flex-row md:text-left"><div className="flex items-center gap-2 font-bold text-[#082443]"><ShieldCheck className="text-cyan-600" size={20} /> SecureCommerce Advisor</div><p>Gestión preventiva de ciberseguridad para MIPYMES guatemaltecas.</p><p>© 2026 SecureCommerce</p></div></footer>
     </main>

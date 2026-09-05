@@ -95,13 +95,15 @@ async def _issue_tokens(
     )
 
 
-@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(
     payload: RegisterRequest,
     request: Request,
-    response: Response,
+    principal: Principal = Depends(get_principal),
     db: AsyncSession = Depends(get_db),
-) -> TokenResponse:
+) -> dict[str, str]:
+    if principal.role not in (RoleCode.ORG_ADMIN, RoleCode.SUPERADMIN):
+        raise HTTPException(status_code=403, detail="Permiso insuficiente")
     email = payload.email.lower()
     duplicate_user = await db.scalar(select(User.id).where(User.email == email))
     duplicate_org = await db.scalar(
@@ -132,11 +134,12 @@ async def register(
         "organization.create",
         "organization",
         "success",
-        user_id=user.id,
+        user_id=principal.user.id,
         organization_id=organization.id,
         resource_id=str(organization.id),
     )
-    return await _issue_tokens(db, request, response, user, membership)
+    await db.commit()
+    return {"id": str(organization.id)}
 
 
 @router.post("/login", response_model=TokenResponse)

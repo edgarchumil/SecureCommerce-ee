@@ -32,7 +32,7 @@ describe('accesibilidad WCAG automatizada', () => {
         <HomePage />
       </QueryClientProvider></MemoryRouter>,
     )
-    await screen.findByRole('heading', { name: /proteja su empresa/i })
+    await screen.findByRole('heading', { name: /proteja su empresa/i }, { timeout: 3000 })
     await expectNoViolations(container)
   })
 

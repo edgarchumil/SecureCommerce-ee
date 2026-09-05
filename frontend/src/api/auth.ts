@@ -38,8 +38,8 @@ export async function login(values: LoginValues): Promise<TokenResponse> {
   return data
 }
 
-export async function registerOrganization(values: RegisterValues): Promise<TokenResponse> {
-  return (await apiClient.post<TokenResponse>('/auth/register', { ...values, country: values.country.toUpperCase() })).data
+export async function registerOrganization(values: RegisterValues): Promise<{ id: string }> {
+  return (await apiClient.post<{ id: string }>('/auth/register', { ...values, country: values.country.toUpperCase() })).data
 }
 export async function getMyOrganizations(): Promise<OrganizationOption[]> { return (await apiClient.get<OrganizationOption[]>('/auth/organizations')).data }
 export async function selectOrganization(organization_id: string): Promise<TokenResponse> { return (await apiClient.post<TokenResponse>('/auth/select-organization', { organization_id })).data }
