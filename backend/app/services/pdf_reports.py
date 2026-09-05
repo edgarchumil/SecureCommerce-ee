@@ -18,7 +18,6 @@ from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
     KeepTogether,
-    NextPageTemplate,
     PageBreak,
     PageTemplate,
     Paragraph,
@@ -195,19 +194,6 @@ def _p(value: object, style: ParagraphStyle) -> Paragraph:
     return Paragraph(escape(_value(value)), style)
 
 
-def _cover(canvas: Any, _doc: BaseDocTemplate, _data: dict[str, Any]) -> None:
-    canvas.saveState()
-    width, height = A4
-    canvas.setFillColor(NAVY)
-    canvas.rect(0, 0, width, height, fill=1, stroke=0)
-    canvas.setFillColor(CYAN)
-    canvas.rect(0, 0, 9 * mm, height, fill=1, stroke=0)
-    canvas.setFillColor(colors.HexColor("#0C3355"))
-    canvas.circle(width - 14 * mm, height - 20 * mm, 52 * mm, fill=1, stroke=0)
-    canvas.circle(width - 4 * mm, 16 * mm, 35 * mm, fill=1, stroke=0)
-    canvas.restoreState()
-
-
 def _header_footer(canvas: Any, doc: BaseDocTemplate, data: dict[str, Any]) -> None:
     canvas.saveState()
     width, height = A4
@@ -381,17 +367,6 @@ def build_pdf(path: Path, report_type: str, data: dict[str, Any]) -> None:
         subject="Informe de ciberseguridad empresarial",
         keywords="ciberseguridad, NIST CSF 2.0, riesgos, activos, MIPYME",
     )
-    cover_frame = Frame(
-        22 * mm,
-        24 * mm,
-        164 * mm,
-        249 * mm,
-        id="cover",
-        leftPadding=0,
-        rightPadding=0,
-        topPadding=0,
-        bottomPadding=0,
-    )
     body_frame = Frame(
         doc.leftMargin,
         doc.bottomMargin,
@@ -405,7 +380,6 @@ def build_pdf(path: Path, report_type: str, data: dict[str, Any]) -> None:
     )
     doc.addPageTemplates(
         [
-            PageTemplate(id="Cover", frames=[cover_frame], onPage=lambda c, d: _cover(c, d, data)),
             PageTemplate(
                 id="Body", frames=[body_frame], onPage=lambda c, d: _header_footer(c, d, data)
             ),
@@ -418,24 +392,25 @@ def build_pdf(path: Path, report_type: str, data: dict[str, Any]) -> None:
     functions = list(data.get("maturity_functions", []))
     recommendations = list(data.get("recommendations", []))
     story: list[Any] = [
-        Spacer(1, 78 * mm),
         Paragraph(
-            "INFORME EJECUTIVO DE CIBERSEGURIDAD"
-            if report_type == "executive"
-            else "INFORME TÉCNICO DE CIBERSEGURIDAD",
+            "INFORME EJECUTIVO" if report_type == "executive" else "INFORME TÉCNICO",
             styles["eyebrow"],
         ),
-        _p(data.get("title"), styles["cover_title"]),
-        _p(data.get("organization"), styles["cover_org"]),
-        Spacer(1, 10 * mm),
-        Paragraph(
-            f"<b>Alcance</b><br/>{escape(_value(data.get('scope')))}<br/><br/><b>Generado</b><br/>{escape(generated)}<br/><br/><b>Preparado por</b><br/>{escape(_value(data.get('prepared_by'), 'SecureCommerce Advisor'))}",
-            styles["cover_meta"],
+        _p(data.get("title"), styles["h1"]),
+        _table(
+            [
+                ["Empresa", "Alcance", "Generado", "Preparado por"],
+                [
+                    data.get("organization"),
+                    data.get("scope"),
+                    generated,
+                    data.get("prepared_by", "SecureCommerce Advisor"),
+                ],
+            ],
+            [42 * mm, 55 * mm, 32 * mm, 31 * mm],
+            styles,
         ),
-        Spacer(1, 42 * mm),
-        Paragraph("CONFIDENCIAL · USO INTERNO", styles["eyebrow"]),
-        NextPageTemplate("Body"),
-        PageBreak(),
+        Spacer(1, 5 * mm),
         Paragraph("Resumen ejecutivo", styles["h1"]),
         _p(_executive_summary(data), styles["body"]),
         Spacer(1, 3 * mm),
