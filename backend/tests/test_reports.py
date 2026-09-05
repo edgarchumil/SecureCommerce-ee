@@ -14,7 +14,28 @@ def report_data() -> dict[str, object]:
         "organization": "Empresa Demo, S.A.",
         "scope": "Servicios tecnológicos críticos",
         "summary": "La organización mantiene controles iniciales y debe priorizar riesgos altos.",
-        "metrics": [{"label": "Activos", "value": 7}, {"label": "Riesgos", "value": 2}],
+        "report_id": "demo-2026",
+        "prepared_by": "Analista Demo",
+        "company": {
+            "slug": "empresa-demo",
+            "sector": "Comercio",
+            "size": "MIPYME",
+            "country": "GT",
+            "is_active": True,
+        },
+        "asset_count": 7,
+        "risk_count": 2,
+        "answered_controls": 12,
+        "evidence_count": 4,
+        "maturity_percent": 50.0,
+        "metrics": [
+            {"label": "Activos registrados", "value": 7},
+            {"label": "Riesgos identificados", "value": 2},
+            {"label": "Madurez NIST CSF 2.0", "value": "50.0%"},
+            {"label": "Evidencias", "value": 4},
+        ],
+        "risk_distribution": {"critical": 1, "high": 1, "medium": 0, "low": 0},
+        "maturity_functions": [{"code": "GV", "name": "Gobernar", "percent": 50.0, "answers": 12}],
         "risks": [
             {
                 "code": "R-01",
@@ -22,9 +43,29 @@ def report_data() -> dict[str, object]:
                 "level": "alto",
                 "score": 15,
                 "strategy": "mitigar",
+                "residual_score": 8,
+                "status": "in_treatment",
+                "progress": 35,
             }
         ],
-        "assets": [{"code": "SRV-01", "name": "Servidor", "type": "server", "criticality": 5}],
+        "assets": [
+            {
+                "code": "SRV-01",
+                "name": "Servidor",
+                "type": "server",
+                "criticality": 5,
+                "owner": "TI",
+                "exposure": "internal",
+            }
+        ],
+        "recommendations": [
+            {
+                "action": "Aplicar MFA",
+                "responsible": "TI",
+                "target_date": "2026-09-30",
+                "progress": 35,
+            }
+        ],
     }
 
 
@@ -36,9 +77,11 @@ def test_executive_and_technical_pdfs_are_valid(tmp_path: Path) -> None:
         text = "".join(page.extract_text() or "" for page in reader.pages)
         assert len(reader.pages) >= 2
         assert "SECURECOMMERCE ADVISOR" in text
-        assert "Principales riesgos" in text
+        assert "Riesgos prioritarios" in text
+        assert "Perfil de la empresa" in text
+        assert "Trazabilidad y alcance" in text
         if report_type == "technical":
-            assert "Inventario incluido" in text
+            assert "Anexo técnico" in text
 
 
 async def test_report_job_and_cross_tenant_isolation(client: AsyncClient, monkeypatch) -> None:  # type: ignore[no-untyped-def]
