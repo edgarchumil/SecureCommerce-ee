@@ -22,7 +22,7 @@ jobs:
       - run: bandit -r backend/app -c pyproject.toml
         working-directory: backend
       - run: pip-audit --local
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: "22", cache: npm, cache-dependency-path: frontend/package-lock.json }
       - run: npm ci && npm audit --audit-level=high
         working-directory: frontend
